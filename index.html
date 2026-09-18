@@ -95,13 +95,13 @@ body {
 .search-input:focus { border-color: var(--red); background: var(--surface); }
 
 .header-count {
-  font-size: .75rem;
-  color: var(--text3);
+  font-size: .95rem;
+  color: var(--text2);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
-.header-count b { color: var(--text2); font-weight: 600; }
+.header-count b { color: var(--red); font-weight: 800; }
 
 /* ============================================================
    FILTER BAR
@@ -131,25 +131,25 @@ body {
 }
 
 .filter-label {
-  font-size: .58rem;
-  font-weight: 600;
-  letter-spacing: .14em;
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .08em;
   text-transform: uppercase;
-  color: var(--text3);
-  width: 50px;
+  color: var(--text);
+  width: 60px;
   flex-shrink: 0;
 }
 
 .chips { display: flex; gap: .3rem; flex-wrap: wrap; align-items: center; }
 
 .chip {
-  padding: .2rem .6rem;
+  padding: .32rem .8rem;
   border: 1px solid var(--border2);
-  border-radius: 4px;
-  font-size: .72rem;
-  font-weight: 500;
-  color: var(--text2);
-  background: transparent;
+  border-radius: 5px;
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--surface2);
   cursor: pointer;
   transition: border-color .15s, color .15s, background .15s;
   white-space: nowrap;
@@ -157,8 +157,11 @@ body {
   line-height: 1.5;
 }
 
-.chip:hover { border-color: rgba(232,50,26,.5); color: var(--text); }
-.chip.active { background: var(--red); border-color: var(--red); color: #fff; }
+.chip:hover { border-color: rgba(232,50,26,.6); color: var(--text); }
+.chip.active { background: rgba(232,50,26,.2); border-color: var(--red); color: #ff7a63; }
+
+/* Filas con chips de tamaño mayor (Género, Década) */
+.filter-row-big .chip { font-size: .85rem; padding: .34rem .85rem; }
 .chip:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
 
 .clear-btn {
@@ -683,6 +686,83 @@ body {
   .card              { transition: none; }
   .modal-backdrop    { backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
+
+/* Botón + modal de ayuda: ícono circular + texto al lado */
+.help-btn {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  background: var(--red);
+  border: none;
+  color: #fff;
+  font-size: .82rem;
+  font-weight: 700;
+  padding: .6rem 1.05rem;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-left: .9rem;
+  transition: background .15s;
+}
+.help-btn:hover { background: var(--red-h); }
+.help-btn .help-ic { font-size: .85rem; line-height: 1; }
+@media (max-width: 640px) {
+  .help-btn { font-size: 0; padding: .55rem; }
+  .help-btn .help-ic { font-size: .95rem; }
+}
+.ayuda-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.72);
+  z-index: 200;
+  align-items: center; justify-content: center;
+  padding: 1.2rem;
+}
+.ayuda-backdrop.open { display: flex; }
+.ayuda-modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-h);
+  position: relative;
+  padding: 1.6rem 1.7rem 1.8rem;
+}
+.ayuda-close {
+  position: absolute; top: .85rem; right: .85rem;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  color: var(--text2);
+  font-size: .9rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.ayuda-close:hover { background: var(--red); border-color: var(--red); color: #fff; }
+.ayuda-modal h2 {
+  font-size: 1.15rem;
+  margin: 0 1.5rem .8rem 0;
+  color: var(--text);
+}
+.ayuda-modal h3 {
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--red);
+  margin: 1.1rem 0 .35rem;
+}
+.ayuda-modal h3:first-of-type { margin-top: 0; }
+.ayuda-modal p {
+  font-size: .82rem;
+  line-height: 1.55;
+  color: var(--text2);
+  margin: 0 0 .5rem;
+}
+.ayuda-modal a { color: var(--red); text-decoration: underline; }
 </style>
 
 <!-- HEADER -->
@@ -698,6 +778,9 @@ body {
     <div class="header-count">
       <b id="cs">120</b> de <b id="ct">120</b>
     </div>
+    <button class="help-btn" id="help-btn" onclick="abrirAyuda()" aria-haspopup="dialog">
+      <span class="help-ic">▶</span> Cómo usar la Cineteca
+    </button>
   </div>
 </header>
 
@@ -706,19 +789,15 @@ body {
   <div class="filter-inner">
     <div class="filter-row">
       <span class="filter-label">Tipo</span>
-      <div class="chips" id="chips-tipo"><button class="chip active">Todas</button><button class="chip">Películas</button><button class="chip">Series</button></div>
+      <div class="chips" id="chips-tipo"></div>
     </div>
-    <div class="filter-row">
-      <span class="filter-label">Formato</span>
-      <div class="chips" id="chips-formato"><button class="chip active">Todos</button><button class="chip">Ficción</button><button class="chip">Documental</button></div>
-    </div>
-    <div class="filter-row">
+    <div class="filter-row filter-row-big">
       <span class="filter-label">Género</span>
-      <div class="chips" id="chips-genero"><button class="chip active">Todos</button><button class="chip">Animación</button><button class="chip">Bélico</button><button class="chip">Ciencia Ficción</button><button class="chip">Comedia</button><button class="chip">Crimen</button><button class="chip">Documental</button><button class="chip">Drama</button><button class="chip">Misterio</button><button class="chip">Romance</button><button class="chip">Terror</button><button class="chip">Thriller</button></div>
+      <div class="chips" id="chips-genero"></div>
     </div>
-    <div class="filter-row">
+    <div class="filter-row filter-row-big">
       <span class="filter-label">Década</span>
-      <div class="chips" id="chips-decada"><button class="chip active">Todas</button><button class="chip" style="opacity: 0.35;">1920s</button><button class="chip" style="opacity: 0.35;">1930s</button><button class="chip">1940s</button><button class="chip">1950s</button><button class="chip">1960s</button><button class="chip">1970s</button><button class="chip">1980s</button><button class="chip">1990s</button><button class="chip">2000s</button><button class="chip">2010s</button><button class="chip">2020s</button></div>
+      <div class="chips" id="chips-decada"></div>
       <button class="clear-btn" id="clear-btn" onclick="limpiarFiltros()" style="display:none">— limpiar filtros</button>
     </div>
   </div>
@@ -728,9 +807,9 @@ body {
 <div class="results-bar">
   <p class="results-count"><b id="count-label">120</b> resultados</p>
   <select class="sort-select" id="orden" onchange="render()">
-    <option value="titulo">Título A–Z</option>
-    <option value="ano_desc">Más reciente</option>
+    <option value="ano_desc" selected>Más reciente</option>
     <option value="ano_asc">Más antiguo</option>
+    <option value="titulo">Título A–Z</option>
     <option value="director">Director A–Z</option>
     <option value="imdb">Mayor puntaje IMDb</option>
   </select>
@@ -1940,7 +2019,43 @@ body {
       </div></div></div>
 </div>
 
-<!-- MODAL -->
+<!-- AYUDA MODAL -->
+<div class="ayuda-backdrop" id="ayuda-backdrop" onclick="if(event.target===this)cerrarAyuda()">
+  <div class="ayuda-modal" role="dialog" aria-modal="true" aria-labelledby="ayuda-titulo">
+    <button class="ayuda-close" onclick="cerrarAyuda()" aria-label="Cerrar">✕</button>
+    <h2 id="ayuda-titulo">Cómo usar la Cineteca</h2>
+    <p>La Zagalteca no es un catálogo más: es una colección curada, pensada por Alejandro título a título. Acá va lo esencial para aprovecharla — por qué vale la pena tener un archivo propio en la era del streaming, y cómo verlo cómodamente en cualquier pantalla.</p>
+
+    <h3>¿Por qué un archivo curado, si ya existe el streaming?</h3>
+    <p>Netflix, Amazon o Mubi arman su oferta según licencias que cambian todo el tiempo: lo que hoy está, en tres meses puede no estar. Ninguna plataforma, además, tiene todo junto: para armar una lista real de cine hace falta pagar cuatro o cinco suscripciones distintas, y aun así faltan títulos — sobre todo clásicos, cine de autor o películas que salieron de catálogo hace años.</p>
+    <p>La Cineteca resuelve eso de otra forma: es una selección hecha por una persona, no por un algoritmo que prioriza lo que conviene mostrar. No depende de contratos de licencia ni desaparece de un día para el otro. Y una vez que la película está en el Drive, queda disponible siempre — no hay que esperar a que "vuelva al catálogo".</p>
+
+    <h3>¿Dónde están los archivos?</h3>
+    <p>Todas las películas viven en una carpeta de <b>Google Drive</b>. Cada ficha del catálogo tiene un botón que lleva directo al archivo correspondiente. El acceso es abierto: cualquiera que tenga el link puede verla, sin pedir permiso ni iniciar sesión con una cuenta específica.</p>
+
+    <h3>Formas de ver una película</h3>
+    <p>Arriba a la derecha del visor de Drive hay dos iconos clave: uno para <b>reproducir directo</b> (▶, sin bajar nada) y otro de <b>descarga</b> (↓, para guardarlo). Funciona igual desde PC, tablet o celular — en el celular, Drive abre su propio reproductor o pregunta con qué app abrir el archivo.</p>
+    <p>· <b>Streaming desde Drive:</b> la opción más simple. Sirve para ver algo rápido, pero el reproductor de Drive es básico — no siempre respeta bien subtítulos incrustados ni audio de pistas múltiples, y con conexión lenta puede tildarse.<br>
+    · <b>Descargar y ver con un reproductor local:</b> la opción más prolija, sobre todo para películas largas o en TV.</p>
+
+    <h3>Reproductor recomendado</h3>
+    <p><a href="https://www.videolan.org/vlc/" target="_blank" rel="noopener">VLC</a> es gratis y existe para compu, tablet y celular (Android o iOS) — se descarga directo desde ese link. Reproduce prácticamente cualquier formato y códec, soporta subtítulos externos (.srt), y sirve tanto para ver el archivo descargado como para transmitirlo a la TV. Conviene evitar el reproductor "Películas y TV" de Windows: es más limitado con formatos y subtítulos incrustados en archivos .mkv.</p>
+
+    <h3>Cómo verlo en el televisor</h3>
+    <p>· <b>Cable HDMI:</b> la forma más confiable para archivos pesados o con codecs raros — se descarga el archivo primero y se reproduce con VLC, así se evitan cortes por conexión.<br>
+    · <b>TV con lector USB:</b> se descarga la película a un pendrive y se reproduce directo desde la Smart TV.<br>
+    · <b>Chromecast, desde la compu:</b> en VLC, menú Reproducción → Renderer, y elegir el Chromecast de la lista.<br>
+    · <b>Chromecast, desde tablet o celular:</b> en la app de VLC, tocar el ícono de Cast (arriba a la derecha, dentro del video) y elegir el Chromecast.</p>
+    <p>En todos los casos con Chromecast, el dispositivo tiene que estar en la misma red WiFi que el Chromecast.</p>
+
+    <h3>¿Se puede ver directo desde el Drive sin descargar?</h3>
+    <p>Sí, en la mayoría de los casos: Drive genera una vista previa reproducible para los formatos más comunes. Si un archivo es muy pesado o de formato menos estándar, puede que Drive no logre generar la vista previa — ahí conviene descargarlo y abrirlo con VLC en vez de insistir con el streaming del navegador.</p>
+
+    <div class="ayuda-nota">Si una película figura como "no disponible actualmente en el Drive", significa que salió temporalmente de la carpeta compartida — no que se perdió del catálogo. Alejandro va actualizando la disponibilidad con el tiempo.</div>
+  </div>
+</div>
+
+<!-- MODAL --><!-- MODAL -->
 <div class="modal-backdrop" id="modal-backdrop" onclick="if(event.target===this)cerrarModal()">
   <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
     <div class="modal-poster-col" id="modal-poster-col">
@@ -1977,6 +2092,16 @@ body {
    DATA — 10 películas piloto
    ============================================================ */
 const PELICULAS = [
+{
+    titulo: 'La Odisea',
+    titulo_original: 'The Odyssey',
+    director: 'Christopher Nolan',
+    ano: 2026, decada: '2020s', pais: 'Reino Unido / EE.UU.', genero: 'Aventura',
+    actores: ['Matt Damon', 'Tom Holland', 'Anne Hathaway', 'Robert Pattinson'],
+    sinopsis: 'Tras la caída de Troya, Odiseo emprende el largo y peligroso regreso a Ítaca, a Penélope y a su hijo Telémaco, enfrentando criaturas mitológicas y dioses caprichosos mientras el futuro de su reino queda en vilo.',
+    poster: 'https://image.tmdb.org/t/p/w500/9aeb5U0saB7Tuu0QITaoENZBxFF.jpg', imdb: 0, metacritic: 0, duracion: 173,
+    tipo: 'pelicula', formato: 'ficcion', disponible: 'si', drive_link: '#', notas_alejandro: 'Estreno 2026, sin puntajes de crítica todavía disponibles al momento de catalogarla.'
+  },
 {
     titulo: 'Yi Yi',
     titulo_original: 'Yi Yi: A One and a Two',
@@ -6933,7 +7058,6 @@ const TODAS_DECADAS = ['1920s','1930s','1940s','1950s','1960s','1970s','1980s','
    STATE
    ============================================================ */
 let filtroTipo    = 'todas';
-let filtroFormato = '';
 let filtroGenero  = '';
 let filtroDecada  = '';
 
@@ -6946,13 +7070,6 @@ function buildChips() {
     const b = chip(lbl, i === 0);
     b.onclick = () => { filtroTipo = val; activate(tipoEl, b); render(); };
     tipoEl.appendChild(b);
-  });
-
-  const formatoEl = document.getElementById('chips-formato');
-  [['Todos', ''], ['Ficción', 'ficcion'], ['Documental', 'documental']].forEach(([lbl, val], i) => {
-    const b = chip(lbl, i === 0);
-    b.onclick = () => { filtroFormato = val; activate(formatoEl, b); render(); };
-    formatoEl.appendChild(b);
   });
 
   const generoEl = document.getElementById('chips-genero');
@@ -6992,7 +7109,6 @@ function filtrar() {
   const q = document.getElementById('busqueda').value.toLowerCase().trim();
   return PELICULAS.filter(p => {
     if (filtroTipo !== 'todas' && p.tipo !== filtroTipo) return false;
-    if (filtroFormato && p.formato !== filtroFormato) return false;
     if (filtroGenero && p.genero !== filtroGenero) return false;
     if (filtroDecada && p.decada !== filtroDecada) return false;
     if (q) {
@@ -7027,7 +7143,7 @@ function render() {
   document.getElementById('ct').textContent = PELICULAS.length;
   document.getElementById('count-label').textContent = lista.length;
 
-  const hasFilters = filtroTipo !== 'todas' || filtroFormato || filtroGenero || filtroDecada
+  const hasFilters = filtroTipo !== 'todas' || filtroGenero || filtroDecada
                    || document.getElementById('busqueda').value;
   document.getElementById('clear-btn').style.display = hasFilters ? '' : 'none';
 
@@ -7177,13 +7293,28 @@ function cerrarModal() {
   document.body.style.overflow = '';
 }
 
+function abrirAyuda() {
+  document.getElementById('ayuda-backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function cerrarAyuda() {
+  document.getElementById('ayuda-backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    var ab = document.getElementById('ayuda-backdrop');
+    if (ab && ab.classList.contains('open')) cerrarAyuda();
+  }
+});
+
 /* ============================================================
    UTILITIES
    ============================================================ */
 function limpiarFiltros() {
-  filtroTipo = 'todas'; filtroFormato = ''; filtroGenero = ''; filtroDecada = '';
+  filtroTipo = 'todas'; filtroGenero = ''; filtroDecada = '';
   document.getElementById('busqueda').value = '';
-  ['chips-tipo', 'chips-formato', 'chips-genero', 'chips-decada'].forEach(id =>
+  ['chips-tipo', 'chips-genero', 'chips-decada'].forEach(id =>
     document.getElementById(id).querySelectorAll('.chip').forEach((c, i) => c.classList.toggle('active', i === 0))
   );
   render();
